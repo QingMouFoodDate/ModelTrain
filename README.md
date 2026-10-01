@@ -12,7 +12,7 @@
 
 它不好理解的地方在于——它不是一个能双击打开的软件，也不是一个人会天天浏览的界面。它是一段**跑在容器里的代码**：平台把它唤醒，丢给它一批数据和一组参数，它把模型训出来，把结果传回去，然后消失。
 
-它的使用者其实不是人，是 [QingMouInfer](https://github.com/QingMouFoodDate/QingMouInfer)。
+它的使用者其实不是人，是 [TrainPlatform](https://github.com/QingMouFoodDate/TrainPlatform)。
 
 ---
 
@@ -35,7 +35,7 @@
 
 ```mermaid
 flowchart LR
-    I["QingMouInfer<br/>创建 K8s Job"] -->|"镜像 digest<br/>train_args.json<br/>exp_override.py"| J["本仓：训练容器"]
+    I["TrainPlatform<br/>创建 K8s Job"] -->|"镜像 digest<br/>train_args.json<br/>exp_override.py"| J["本仓：训练容器"]
     J --> W["读取 COCO 数据"]
     J --> X["YOLOX 训练"]
     J --> Y["评估 / 导出"]
@@ -93,7 +93,7 @@ flowchart LR
 | 深度学习 | **PyTorch + CUDA** | 版本必须锁定，见坑一 |
 | 数据格式 | **COCO** | YOLOX 原生支持，也便于和外部数据集互通 |
 | 指标 | pycocotools | 目标检测的事实标准 |
-| 导出 | ONNX（`opset=11`） | 端侧要用，见 [QingMouCollection](https://github.com/QingMouFoodDate/QingMouCollection) |
+| 导出 | ONNX（`opset=11`） | 端侧要用，见 [MobileClient](https://github.com/QingMouFoodDate/MobileClient) |
 
 ### 坑一：PyTorch 版本必须锁定，禁止用 latest
 
@@ -181,15 +181,15 @@ docker run --gpus all -v "$PWD/fixtures:/work" qingmou-train:dev \
 
 ## 相关文档
 
-仓库里只放代码，产品设计与全部决策依据在 [ProjectDocs](https://github.com/QingMouFoodDate/ProjectDocs)：
+仓库里只放代码，产品设计与全部决策依据在 [ProjectPRD](https://github.com/QingMouFoodDate/ProjectPRD)：
 
 | 文档 | 内容 |
 | :--- | :--- |
-| [PLAN.md](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PLAN.md) | 产品形态 + Issue 清单 |
-| [REPOS.md](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/REPOS.md) | 仓库地图与跨仓契约 |
-| [P0082](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PRD/05_训练平台/P0082_训练任务提交与调度.md) | 任务调度与执行器 |
-| [P0083](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PRD/05_训练平台/P0083_超参数与训练模板.md) | 超参面与快照 |
-| [P0112](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PRD/07_部署推理/P0112_端侧导出.md) | 端侧导出与精度复测 |
+| [PLAN.md](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PLAN.md) | 产品形态 + Issue 清单 |
+| [REPOS.md](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/REPOS.md) | 仓库地图与跨仓契约 |
+| [P0082](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PRD/05_训练平台/P0082_训练任务提交与调度.md) | 任务调度与执行器 |
+| [P0083](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PRD/05_训练平台/P0083_超参数与训练模板.md) | 超参面与快照 |
+| [P0112](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PRD/07_部署推理/P0112_端侧导出.md) | 端侧导出与精度复测 |
 
 ---
 
