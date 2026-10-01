@@ -1,4 +1,4 @@
-# QingMouTrain · 轻眸识刻训练脚本
+# ModelTrain · 轻眸识刻训练脚本
 
 > 容器里面发生的一切。平台负责把任务送进来，这个仓负责把模型做出来。
 
@@ -114,7 +114,7 @@ YOLO 系列里最有名的是 Ultralytics 的实现，但它用的是 **AGPL-3.0
 ## 规划目录结构
 
 ```text
-QingMouTrain/
+ModelTrain/
 ├── entrypoints/
 │   └── train.py             # 训练入口：读参数 → 构建 Exp → 跑训练 → 上传产物 → 回调
 ├── qmtrain/
@@ -181,15 +181,15 @@ docker run --gpus all -v "$PWD/fixtures:/work" qingmou-train:dev \
 
 ## 相关文档
 
-仓库里只放代码，产品设计与全部决策依据在 [QingMouPRD](https://github.com/QingMouFoodDate/QingMouPRD)：
+仓库里只放代码，产品设计与全部决策依据在 [ProjectDocs](https://github.com/QingMouFoodDate/ProjectDocs)：
 
 | 文档 | 内容 |
 | :--- | :--- |
-| [PLAN.md](https://github.com/QingMouFoodDate/QingMouPRD/blob/main/PLAN.md) | 产品形态 + Issue 清单 |
-| [REPOS.md](https://github.com/QingMouFoodDate/QingMouPRD/blob/main/REPOS.md) | 仓库地图与跨仓契约 |
-| [P0082](https://github.com/QingMouFoodDate/QingMouPRD/blob/main/PRD/05_训练平台/P0082_训练任务提交与调度.md) | 任务调度与执行器 |
-| [P0083](https://github.com/QingMouFoodDate/QingMouPRD/blob/main/PRD/05_训练平台/P0083_超参数与训练模板.md) | 超参面与快照 |
-| [P0112](https://github.com/QingMouFoodDate/QingMouPRD/blob/main/PRD/07_部署推理/P0112_端侧导出.md) | 端侧导出与精度复测 |
+| [PLAN.md](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PLAN.md) | 产品形态 + Issue 清单 |
+| [REPOS.md](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/REPOS.md) | 仓库地图与跨仓契约 |
+| [P0082](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PRD/05_训练平台/P0082_训练任务提交与调度.md) | 任务调度与执行器 |
+| [P0083](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PRD/05_训练平台/P0083_超参数与训练模板.md) | 超参面与快照 |
+| [P0112](https://github.com/QingMouFoodDate/ProjectDocs/blob/main/PRD/07_部署推理/P0112_端侧导出.md) | 端侧导出与精度复测 |
 
 ---
 
