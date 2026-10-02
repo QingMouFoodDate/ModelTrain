@@ -62,21 +62,19 @@ flowchart TD
 
 ## 三、 推荐算法实验架构
 
-目录结构遵循实验配置与网络代码解耦规范，除根目录外，仅展示文件夹层级：
-
 ```text
 ModelTrain/
-├── README.md
-├── requirements.txt
-├── .gitignore
-├── configs/
-├── datasets/
-├── models/
-│   ├── detectors/
-│   ├── recognizers/
-│   └── postprocess/
-├── tools/
-└── deploy/
+├── README.md                      # 算法训练环境说明与实验复现指引
+├── requirements.txt               # 深度学习依赖库与框架版本锁定
+├── .gitignore                     # Git 忽略配置与模型权重缓存过滤
+├── configs/                       # 检测与识别算法超参数与数据流配置
+├── datasets/                      # 集中样本存储接入与 DataLoader 适配层
+├── models/                        # 深度学习核心组网与后处理算子目录
+│   ├── detectors/                 # 极小目标日期打码检测网络结构
+│   ├── recognizers/               # 微型文本与点阵断笔 OCR 识别模型
+│   └── postprocess/               # 连通域规整、动态规划与加权纠错算法
+├── tools/                         # 离线批量评估、消融实验与基准测试工具
+└── deploy/                        # ONNX 导出、FP16 转换与 PTQ 量化脚本
 ```
 
 ---
@@ -84,7 +82,7 @@ ModelTrain/
 ## 四、 数据集挂载与算法交付规约
 
 1. **集中数据集挂载**：数据集统一对接 TrainPlatform 部署服务器的集中样本存储服务，代码仓库中严禁提交高容量图像文件；
-2. **规范交付产物**：模型训练收敛并通过基准评测后，严格遵循 [`ProjectPRD/contracts/模型交付规约.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/contracts/模型交付规约.md) 导出包含检测 ONNX、识别 ONNX、`dict.txt` 与评估卡片 `metadata.yaml` 的交付产物包。
+2. **规范交付产物**：模型训练收敛并通过基准评测后，严格遵循 [`ProjectPRD/contracts/MODEL.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/contracts/MODEL.md) 导出包含检测 ONNX、识别 ONNX、`dict.txt` 与评估卡片 `metadata.yaml` 的交付产物包。
 
 ---
 
