@@ -62,7 +62,7 @@ ModelTrain/ (推荐目录结构参考)
 
 为避免高容量图片污染代码 Git 历史，数据集物理存放在**同级独立暂存库**：
 - **数据源路径**：`../data/raw/`（当前包含经过单张原图无损审阅的 **197 张纯正黄金基准样本** 及 `manifest.jsonl`）；
-- **数据质量宪法**：全员遵循 [`ProjectPRD/standards/数据采集审核与质量控制规范.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/standards/数据采集审核与质量控制规范.md)（4 项生活环境容差与 6 大一票否决底线）；
+- **数据质量宪法**：全员遵循 [`ProjectPRD/standards/数据质量规范.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/standards/数据质量规范.md)（4 项生活环境容差与 6 大一票否决底线）；
 - **门禁验证**：训练前可运行暂存库验证脚本：
   ```bash
   python ../data/scripts/verify_dataset_quality.py
@@ -72,7 +72,7 @@ ModelTrain/ (推荐目录结构参考)
 
 ## 四、 算法交付规约 (唯一跨仓契约)
 
-算法模型最终交付给 `TrainPlatform` 时，**必须且只能严格遵守** [`ProjectPRD/contracts/model_contracts.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/contracts/model_contracts.md)：
+算法模型最终交付给 `TrainPlatform` 时，**必须且只能严格遵守** [`ProjectPRD/contracts/模型交付规约.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/contracts/模型交付规约.md)：
 
 1. **检测模型规格**：输入尺寸固定为 `[1, 3, 640, 640]`，输出固定格式的 Anchor/BBox 阵列；
 2. **OCR 识别规格**：输出标准字符概率分布，且**必须附带标准的 `dict.txt` 字符字典表**；
