@@ -1,198 +1,87 @@
-# ModelTrain · 轻眸识刻训练脚本
+# ModelTrain · 轻眸识刻算法计算核心
 
-> 容器里面发生的一切。平台负责把任务送进来，这个仓负责把模型做出来。
-
----
-
-## 我们在做什么
-
-整个项目想做的事只有一句话：**拍一张食品包装的照片，让机器把生产日期读出来。**
-
-而这一仓，是那个真的把模型训出来的部分。
-
-它不好理解的地方在于——它不是一个能双击打开的软件，也不是一个人会天天浏览的界面。它是一段**跑在容器里的代码**：平台把它唤醒，丢给它一批数据和一组参数，它把模型训出来，把结果传回去，然后消失。
-
-它的使用者其实不是人，是 [TrainPlatform](https://github.com/QingMouFoodDate/TrainPlatform)。
+> **组织归属**：`QingMouFoodDate` GitHub 组织  
+> **仓库性质**：专注于食品包装生产日期与保质期**小目标定位检测、微型字符 OCR 识别网络训练与轻量化导出**的算法计算核心工程  
 
 ---
 
-## 为什么训练代码要单独一个仓
+## 🔬 一、 核心定位与职责边界
 
-这件事值得解释一下，因为「不就是几个训练脚本吗，为什么不放在平台仓里」是个很自然的疑问。
+针对食品包装上日期常存在的**“小尺度、反光褶皱、点阵喷码断笔、背面营养成分表大量无关印刷文字干扰”**等工业痛点，本仓库承担算法模型从“数据读取 ➔ 模型训练 ➔ 指标评测 ➔ 轻量化交付”的全生命周期研发。
 
-答案在于**这两部分的生命周期完全不同**：
+### 1. 本仓职责范围 (In Scope)
+- **小目标日期检测模型研发**：在整张包装图中精准快速框选生产日期与到期日所在微小打码区域；
+- **微型工业字符 OCR 识别**：针对点阵喷墨、无墨钢印、激光刻印进行高精度序列字符识别；
+- **图像自适应增强流水线**：研发针对点阵断笔、金属曲面高光、透视形变的自适应预处理算子；
+- **模型轻量化与跨平台导出**：将 PyTorch 模型无损导出为标准 ONNX 格式，供后端与端侧加载。
 
-平台是长期在线的服务——它一直跑着，数据库一直连着，用户随时可能打开页面。它改动一次，需要测试、需要部署、可能还需要重启。
-
-训练容器是**一次性的**——被创建、跑完、销毁。它的依赖是 CUDA、PyTorch、YOLOX 这些又大又重的东西，一个镜像好几个 G。它的失败是常态（显存不够、数据有问题、节点掉线），需要的是重试和隔离，而不是"别挂"。
-
-把它们放在一个仓里，会带来两个具体的麻烦：改一行平台代码的日志格式，会触发训练镜像重建；换一个 PyTorch 版本，会连带影响平台的 CI。**两者的更新节奏根本不该被绑在一起。**
-
-所以边界划在这里：
-
-- **平台管**：在哪个节点、起哪个镜像、传什么参数、产物收到哪里。
-- **本仓管**：容器起来之后的一切。
-
-```mermaid
-flowchart LR
-    I["TrainPlatform<br/>创建 K8s Job"] -->|"镜像 digest<br/>train_args.json<br/>exp_override.py"| J["本仓：训练容器"]
-    J --> W["读取 COCO 数据"]
-    J --> X["YOLOX 训练"]
-    J --> Y["评估 / 导出"]
-    J -->|"产物上传 + 回调<br/>幂等 (task_id, attempt)"| I
-```
+### 2. 避免过度设计与边界禁止 (Out of Scope)
+- ❌ **严禁写死 Docker 容器强依赖**：算法同学可以在单机或实验室 GPU 电脑上直接使用 Python 原生环境开发调试；
+- ❌ **严禁侵入 Web 或业务持久层**：不要写 Web 界面代码，不要直接连接业务数据库。算法仓库专注于指标（mAP50、字符精确度）与模型资产交付。
 
 ---
 
-## 一次训练里到底发生了什么
+## 🏗️ 二、 推荐算法实验架构 (参考科研与工业标准)
 
-把镜头拉近，一次训练任务的完整过程是这样的：
-
-**第一步，容器被唤醒。** 平台把两样东西挂进来：`train_args.json`（这次任务的只读快照——用哪个数据集版本、输出到哪、是第几次尝试）和 `exp_override.py`（超参数，由平台根据你在界面上填的表单生成）。本仓只负责读，不做二次解析——**参数的唯一真相在平台侧，这里不再做判断**，否则会出现"两边都觉得自己对"的问题。
-
-**第二步，数据准备。** 数据以 COCO 格式物化好（YOLOX 原生就吃这个格式）。如果这次是断点续训，会先找回上次的 `latest_ckpt.pth`，把优化器状态、epoch 计数、学习率调度一起恢复——**从断的地方接着跑，而不是从头再来。**
-
-**第三步，训练。** 调 YOLOX 跑，产物按约定落到 `YOLOX_outputs/<experiment_name>/` 下。文件名是固定的：`latest_ckpt.pth`（每轮更新）、`best_ckpt.pth`（指标最好时）、`train_log.txt`（日志，也是指标曲线的唯一数据源）。
-
-**第四步，评估。** 在验证集上跑 COCOeval，算 mAP、每类 AP、混淆矩阵。这些不是 YOLOX 自己会输出的东西，需要自己算、自己画。
-
-**第五步，出站。** 把产物传到对象存储，然后回调平台。回调带着 `(train_task_id, attempt)` ——**平台侧幂等**，所以这里不需要自己实现去重，重复回调是安全的。
-
-没有第六步。容器销毁。
-
----
-
-## 功能范围
-
-### 一期做这些
-
-| 区域 | 能力 |
-| :--- | :--- |
-| **训练** | 训练入口（读 `train_args.json` / `exp_override.py`）；超参 → YOLOX Exp 字段映射；跑训练并落盘 ckpt 与日志 |
-| **断点续训** | `attempt > 1` 自动从 `latest_ckpt.pth` 恢复（含 optimizer state / epoch / lr） |
-| **产物出站** | 产物上传对象存储 + 回调平台；**幂等键 `(train_task_id, attempt)`** |
-| **评估** | COCOeval 指标计算（含 per-class、混淆矩阵、PR 曲线数据）；按切片维度（来源 / 分辨率 / 难例）分组评估 |
-| **导出** | ONNX 导出与导出后精度复测 |
-| **数据算子** | 视频抽帧（含帧血缘）；去重（精确 / 近重复）；清洗（损坏 / 模糊 / 无目标 / 尺寸异常）；分组切分；数据增强配置 |
-| **环境** | 训练镜像 Dockerfile（CUDA → PyTorch → YOLOX → 代码）与构建脚本 |
-
-### 一期不做这些
-
-- ❌ 任务调度、节点管理、排队 —— 那是平台的事，这里只被调度
-- ❌ 数据存储与版本管理 —— 这里只读，不改
-- ❌ 任何面向人的界面
-
----
-
-## 技术栈，以及两个必须守住的坑
-
-| 层 | 选型 | 为什么 |
-| :--- | :--- | :--- |
-| 语言 | **Python 3.11+** | 生态在这里，没有第二选择 |
-| 训练框架 | **YOLOX（Apache-2.0）** | 见下面的坑二 |
-| 深度学习 | **PyTorch + CUDA** | 版本必须锁定，见坑一 |
-| 数据格式 | **COCO** | YOLOX 原生支持，也便于和外部数据集互通 |
-| 指标 | pycocotools | 目标检测的事实标准 |
-| 导出 | ONNX（`opset=11`） | 端侧要用，见 [MobileClient](https://github.com/QingMouFoodDate/MobileClient) |
-
-### 坑一：PyTorch 版本必须锁定，禁止用 latest
-
-YOLOX 的源码里用的是 `torch.cuda.amp.GradScaler`，这条路径在新版 PyTorch 里已经被弃用，而 YOLOX 上游最后一次更新停在 2023 年 2 月——**它不会再跟着 PyTorch 走了**。
-
-这不是"以后可能出问题"，是"换个版本立刻出问题"。所以镜像里必须把 torch 版本钉死，而且整个环境的可复现性以 **image digest** 为准，不看 tag。tag 会变，digest 不会。
-
-### 坑二：训练框架必须是 Apache-2.0 系，不能用 Ultralytics
-
-YOLO 系列里最有名的是 Ultralytics 的实现，但它用的是 **AGPL-3.0**——这个许可证会**传染到它训练出来的模型权重**，而且官方明确说明：内部私有、未开源的项目同样需要购买商业授权。
-
-这意味着如果用了它，我们训出来的每一个模型都带着授权瑕疵。所以一开始就选了 **YOLOX**，同样是 Apache-2.0 的 YOLO 系列实现。将来如果要换成 MMDetection 或 RT-DETR，也必须满足同一条约束。
-
-**这不是技术偏好，是合规底线。**
-
----
-
-## 规划目录结构
+为保证科研实验可复现（消融实验、论文撰写与答辩展示）及工程交付标准，**强烈推荐采用超参配置与网络结构解耦的标准结构**：
 
 ```text
-ModelTrain/
-├── entrypoints/
-│   └── train.py             # 训练入口：读参数 → 构建 Exp → 跑训练 → 上传产物 → 回调
-├── qmtrain/
-│   ├── config/              # train_args.json / exp_override.py 的解析与校验
-│   ├── exp/                 # YOLOX Exp 字段映射与默认值
-│   ├── artifacts/           # 产物发现、上传、回调（幂等）
-│   ├── resume/              # 断点续训逻辑
-│   ├── eval/                # COCOeval 指标、切片评估、报告生成
-│   ├── export/              # ONNX / TRT / OpenVINO / NCNN 导出与精度复测
-│   └── ops/                 # 数据算子：抽帧、去重、清洗、切分、增强
-├── docker/
-│   ├── Dockerfile.train     # 训练镜像
-│   └── Dockerfile.ops       # 数据算子镜像
-├── tests/
-└── README.md
+ModelTrain/ (推荐目录结构参考)
+├── README.md                      # 本说明文档
+├── requirements.txt               # 算法核心依赖 (PyTorch, Torchvision, Albumentations, ONNX, PyYAML)
+├── .gitignore                     # 忽略权重文件 (*.pth, runs/, __pycache__/)
+├── configs/                       # 【实验配置中心】所有超参通过 YAML 驱动，严禁代码硬编码！
+│   ├── det_date_nano.yaml         # 小目标检测模型超参 (learning_rate, epochs, input_size, batch_size)
+│   └── rec_crnn_tiny.yaml         # 局部微型字符 OCR 识别网络超参
+├── datasets/                      # 【数据集封装】标准 PyTorch Dataset 与自适应数据增强
+│   ├── date_dataset.py            # 读取同级暂存库 ../data/raw/manifest.jsonl
+│   └── transforms.py              # CLAHE 去反光增强、微距尺度缩放与仿射形变
+├── models/                        # 【神经网络定义】
+│   ├── detectors/                 # 检测网络结构 (Backbone, FPN Neck, P2 微小目标检测头)
+│   └── recognizers/               # 识别网络结构 (CRNN / SVTR / CTC Loss)
+├── tools/                         # 【标准入口脚本】算法同学的日常工作入口
+│   ├── train.py                   # 启动训练：python tools/train.py --config configs/det_date_nano.yaml
+│   ├── eval.py                    # 启动评测：在验证集上计算 mAP50 与 OCR 字符准度
+│   └── export_onnx.py             # 导出交付：将 PyTorch 模型转为合规 ONNX 模型
+└── deploy/                        # 【交付前精度验证】
+    └── verify_onnx.py             # 检验 ONNX 与 PyTorch 原模型推断结果的一致性 (误差 < 1e-4)
 ```
 
 ---
 
-## 与平台的契约
+## 📂 三、 共享数据集挂载与质检门禁
 
-平台通过**三样东西**驱动本仓，其余全部由本仓自治。
-
-### 1. 入参
-
-| 文件 | 内容 |
-| :--- | :--- |
-| `train_args.json` | 只读快照：`train_task_id`、`attempt`、数据集物化路径、输出目录、`params_hash` |
-| `exp_override.py` | 白名单字段生成，**由平台生成**，本仓只读取执行，不做二次解析 |
-
-### 2. 产物约定（文件名固定，平台按名回收）
-
-| 文件 | 说明 |
-| :--- | :--- |
-| `YOLOX_outputs/<experiment_name>/latest_ckpt.pth` | 每 epoch 覆盖 |
-| `YOLOX_outputs/<experiment_name>/best_ckpt.pth` | AP 提升时 |
-| `YOLOX_outputs/<experiment_name>/epoch_<n>_ckpt.pth` | 由 `save_history_ckpt` 控制 |
-| `YOLOX_outputs/<experiment_name>/train_log.txt` | 指标曲线的唯一数据源 |
-
-> 评估产物（PR 曲线、混淆矩阵、`eval_<epoch>.json`）**不是 YOLOX 原生产物**，
-> 由本仓的评估模块自行绘制并输出。
-
-### 3. 回调
-
-上传完成后回调平台，携带 `(train_task_id, attempt)`。
-**平台侧幂等**：重复回调只落一条模型版本记录——本仓不要自己实现去重。
+为避免高容量图片污染代码 Git 历史，数据集物理存放在**同级独立暂存库**：
+- **数据源路径**：`../data/raw/`（当前包含经过单张原图无损审阅的 **197 张纯正黄金基准样本** 及 `manifest.jsonl`）；
+- **数据质量宪法**：全员遵循 [`ProjectPRD/standards/数据采集审核与质量控制规范.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/standards/数据采集审核与质量控制规范.md)（4 项生活环境容差与 6 大一票否决底线）；
+- **门禁验证**：训练前可运行暂存库验证脚本：
+  ```bash
+  python ../data/scripts/verify_dataset_quality.py
+  ```
 
 ---
 
-## 快速开始
+## 🤝 四、 算法交付规约 (唯一跨仓契约)
 
-```bash
-# 依赖：Docker + NVIDIA Container Toolkit、Python 3.11+
+算法模型最终交付给 `TrainPlatform` 时，**必须且只能严格遵守** [`ProjectPRD/contracts/model_contracts.md`](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/contracts/model_contracts.md)：
 
-# 构建训练镜像
-docker build -f docker/Dockerfile.train -t qingmou-train:dev .
-
-# 本地试跑（模拟平台传入的参数）
-docker run --gpus all -v "$PWD/fixtures:/work" qingmou-train:dev \
-  python entrypoints/train.py --args /work/train_args.json
-```
+1. **检测模型规格**：输入尺寸固定为 `[1, 3, 640, 640]`，输出固定格式的 Anchor/BBox 阵列；
+2. **OCR 识别规格**：输出标准字符概率分布，且**必须附带标准的 `dict.txt` 字符字典表**；
+3. **交付产物**：打包为包含 `qingmou_det.onnx`、`qingmou_rec.onnx`、`dict.txt` 与 `metadata.yaml`（记录 mAP 和耗时）的 Release Bundle。
 
 ---
 
-## 相关文档
+## 🚀 五、 算法组探索空间 (技术自主权)
 
-仓库里只放代码，产品设计与全部决策依据在 [ProjectPRD](https://github.com/QingMouFoodDate/ProjectPRD)：
-
-| 文档 | 内容 |
-| :--- | :--- |
-| [PLAN.md](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PLAN.md) | 产品形态 + Issue 清单 |
-| [REPOS.md](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/REPOS.md) | 仓库地图与跨仓契约 |
-| [P0082](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PRD/05_训练平台/P0082_训练任务提交与调度.md) | 任务调度与执行器 |
-| [P0083](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PRD/05_训练平台/P0083_超参数与训练模板.md) | 超参面与快照 |
-| [P0112](https://github.com/QingMouFoodDate/ProjectPRD/blob/main/PRD/07_部署推理/P0112_端侧导出.md) | 端侧导出与精度复测 |
+**算法框架与网络架构不设限制，鼓励算法同学大胆创新**：
+- 目标检测可在 **YOLOv8 / YOLOv11 / YOLOX / RT-DETR** 间自由对比选型，鼓励探索 P2 浅层微小目标特征层；
+- OCR 识别可在 **CRNN / SVTR-Tiny** 等轻量架构中探索；
+- 丰富的实验对比与消融分析将在答辩和论文中成为极具含金量的加分项！
 
 ---
 
-## License
+## 🏁 六、 阶段完成定义 (Definition of Done, DoD)
 
-内部项目，未经许可不得外传。
+- [ ] **阶段 1 (数据跑通)**：`datasets/date_dataset.py` 能够成功读取 `../data/raw/` 并解析 197 张样本与标注；
+- [ ] **阶段 2 (Baseline 建立)**：完成第一版小目标检测模型训练，验证集 mAP50 达到基线水平；
+- [ ] **阶段 3 (ONNX 交付)**：通过 `tools/export_onnx.py` 导出 ONNX 模型，并由 `verify_onnx.py` 验证精度对齐。
