@@ -4,6 +4,8 @@
 
 ModelTrain 负责数据适配、模型训练、消融实验、统一评测和标准模型包导出。文档中的模型结构和实验方法均为研发候选或交付约束，具体采用方案以可复现实验结果为准。它不负责客户端 API、在线识别会话、日期语义决策或生产环境的模型调度。
 
+训练所用的数据由 `TrainPlatform` 管理：本仓只读消费其冻结的数据集版本与标注结果，不修改样本、版本与切分。
+
 ---
 
 ## 一、研发定位与职责边界
@@ -26,7 +28,7 @@ ModelTrain 负责数据适配、模型训练、消融实验、统一评测和标
 - 不将人工纠偏样本未经审核自动加入训练集；
 - 不在公开代码仓库中提交原始图片或其他敏感数据。
 
-模型交付后，由 TrainPlatform / Inference Runtime 负责加载、校验和调用；日期语义推导与标示状态决策由 TrainPlatform 负责，模型本身只输出约定的机器观察值。
+模型交付后，由 InferPlatform / Inference Runtime 负责加载、校验和调用；日期语义推导与标示状态决策由 InferPlatform 负责，模型本身只输出约定的机器观察值。
 
 ---
 
@@ -40,7 +42,7 @@ flowchart TD
     D --> E["受限字符解码与后处理"]
     E --> F["统一评测与消融实验"]
     F --> G["模型导出与模型卡片"]
-    G --> H["TrainPlatform / Inference Runtime"]
+    G --> H["InferPlatform / Inference Runtime"]
 ```
 
 研究重点包括：
@@ -59,7 +61,7 @@ flowchart TD
 
 ### 4. 多分支信息支持
 
-可以分别提取局部打码信息和全局包装说明，再将模型观察值交由 TrainPlatform 聚合为结构化证据。ModelTrain 输出观察值，不直接输出最终食品期限结论。
+可以分别提取局部打码信息和全局包装说明，再将模型观察值交由 InferPlatform 聚合为结构化证据。ModelTrain 输出观察值，不直接输出最终食品期限结论。
 
 ---
 
@@ -167,7 +169,7 @@ release_bundle/
 
 `metadata.yaml` 中的指标必须注明评测数据版本和运行环境，示例字段只用于说明格式，不作为项目性能承诺。
 
-ModelTrain 只交付标准化模型资产和评测信息；TrainPlatform 负责模型发布、加载、访问控制和在线推理调用。
+ModelTrain 只交付标准化模型资产和评测信息；InferPlatform 负责模型发布、加载、访问控制和在线推理调用。
 
 ---
 
