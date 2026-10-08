@@ -14,7 +14,7 @@ ModelTrain 负责视觉感知算法攻坚，涵盖日期区域定位模型、微
 | :--- | :--- |
 | **当前阶段** | 处于架构规范与 M0 核心原型攻坚阶段，支持单机 CLI 独立开展算法实验 |
 | **实现范围** | M0 阶段聚焦单图主链路所需的基础检测与局部识别算法闭环，多分支复杂结构随后续阶段递进开展 |
-| **契约基准** | 数据输入与模型产物严格受限于上位 [核心数据模型](../ProjectPRD/contracts/核心数据模型.md)、[离线训练规约](../ProjectPRD/contracts/离线训练规约.md) 与 [模型交付规约](../ProjectPRD/contracts/模型交付规约.md) |
+| **契约基准** | 数据输入与模型产物严格受限于上位 [contracts/DATA.md](../ProjectPRD/contracts/DATA.md)、[contracts/TRAINING.md](../ProjectPRD/contracts/TRAINING.md) 与 [contracts/MODEL.md](../ProjectPRD/contracts/MODEL.md) |
 
 ---
 
@@ -54,7 +54,7 @@ flowchart TD
 
 ## 三、算法执行入口与契约映射
 
-根据上位 [离线训练规约](../ProjectPRD/contracts/离线训练规约.md) 约定，本仓主要提供四大核心离线执行入口：
+根据上位 [contracts/TRAINING.md](../ProjectPRD/contracts/TRAINING.md) 约定，本仓主要提供四大核心离线执行入口：
 
 | 执行入口 | 输入契约 | 输出产物与记录 |
 | :--- | :--- | :--- |
@@ -77,7 +77,8 @@ flowchart TD
 
 ## 五、标准模型交付包结构
 
-导出的候选模型包必须满足 [模型交付规约](../ProjectPRD/contracts/模型交付规约.md) 的统一要求：
+导出的候选模型包必须满足 [contracts/MODEL.md](../ProjectPRD/contracts/MODEL.md) 的统一要求：
+
 
 | 组成部分 | 交付资产与文件 | 规约要求 |
 | :--- | :--- | :--- |
@@ -120,6 +121,7 @@ ModelTrain/                     # 离线算法研发与模型交付仓库
 | :--- | :--- | :--- |
 | **系统设计与规划** | [需求规格](../ProjectPRD/需求规格.md) · [系统架构](../ProjectPRD/系统架构.md) · [开发路线](../ProjectPRD/开发路线.md) | 确立系统功能边界、8 仓架构分层与 M0 迭代里程碑 |
 | **科研假设与实验** | [算法实验](../ProjectPRD/算法实验.md) | 规范 H1~H8 算法假设、消融对照组与分层评测指标 |
-| **跨仓技术契约** | [核心数据模型](../ProjectPRD/contracts/核心数据模型.md) · [离线训练规约](../ProjectPRD/contracts/离线训练规约.md) · [模型交付规约](../ProjectPRD/contracts/模型交付规约.md) | 离线执行入口、数据接口规范与标准化模型交付要求 |
+| **跨仓技术契约** | [contracts/DATA.md](../ProjectPRD/contracts/DATA.md) · [contracts/TRAINING.md](../ProjectPRD/contracts/TRAINING.md) · [contracts/MODEL.md](../ProjectPRD/contracts/MODEL.md) | 离线执行入口、数据接口规范与标准化模型交付要求 |
 | **质量与工程规范** | [数据质量规范](../ProjectPRD/standards/数据质量规范.md) · [工程协作指南](../ProjectPRD/standards/工程协作指南.md) | 样本准入红线、生活容差与代码提交规约 |
+
 
