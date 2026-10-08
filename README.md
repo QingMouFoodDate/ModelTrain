@@ -10,9 +10,11 @@ ModelTrain 负责视觉感知算法攻坚，涵盖日期区域定位模型、微
 
 ## 工程状态与边界说明
 
-- **当前阶段**：处于架构规范与 M0 核心原型攻坚阶段，支持单机 CLI 独立开展算法实验；
-- **实现范围**：M0 阶段聚焦单图主链路所需的基础检测与局部识别算法闭环，多分支复杂结构随后续阶段递进开展；
-- **契约基准**：数据输入与模型产物严格受限于上位 [DATA.md](../ProjectPRD/contracts/DATA.md)、[TRAINING.md](../ProjectPRD/contracts/TRAINING.md) 与 [MODEL.md](../ProjectPRD/contracts/MODEL.md)。
+| 维度 | 说明 |
+| :--- | :--- |
+| **当前阶段** | 处于架构规范与 M0 核心原型攻坚阶段，支持单机 CLI 独立开展算法实验 |
+| **实现范围** | M0 阶段聚焦单图主链路所需的基础检测与局部识别算法闭环，多分支复杂结构随后续阶段递进开展 |
+| **契约基准** | 数据输入与模型产物严格受限于上位 [核心数据模型](../ProjectPRD/contracts/核心数据模型.md)、[离线训练规约](../ProjectPRD/contracts/离线训练规约.md) 与 [模型交付规约](../ProjectPRD/contracts/模型交付规约.md) |
 
 ---
 
@@ -23,7 +25,7 @@ ModelTrain 负责视觉感知算法攻坚，涵盖日期区域定位模型、微
 - **小目标定位算法**：针对复杂背景，研发小目标定位网络（如适配 P2 高分辨率特征层），提升微小日期区域召回率；
 - **微型字符识别**：针对点阵喷码、激光打标与钢印字符，研发局部几何校正、超分辨率增强与受限字符解码算法；
 - **只读数据适配**：消费 TrainPlatform 冻结的受控数据集版本，执行版本与哈希一致性核验；
-- **统一实验与消融**：严密对照基线配置，执行 [RESEARCH.md](../ProjectPRD/RESEARCH.md) 规划的消融验证并记录指标；
+- **统一实验与消融**：严密对照基线配置，执行 [算法实验](../ProjectPRD/算法实验.md) 规划的消融验证并记录指标；
 - **标准交付包导出**：生成符合全域规约的 ONNX 格式模型包，包含预后处理配置、字典与 smoke 验证用例。
 
 ### 2. 研发协作与系统边界
@@ -52,7 +54,7 @@ flowchart TD
 
 ## 三、算法执行入口与契约映射
 
-根据上位 [TRAINING.md](../ProjectPRD/contracts/TRAINING.md) 约定，本仓主要提供四大核心离线执行入口：
+根据上位 [离线训练规约](../ProjectPRD/contracts/离线训练规约.md) 约定，本仓主要提供四大核心离线执行入口：
 
 | 执行入口 | 输入契约 | 输出产物与记录 |
 | :--- | :--- | :--- |
@@ -75,13 +77,15 @@ flowchart TD
 
 ## 五、标准模型交付包结构
 
-导出的候选模型包必须满足 [MODEL.md](../ProjectPRD/contracts/MODEL.md) 的统一规约要求：
+导出的候选模型包必须满足 [模型交付规约](../ProjectPRD/contracts/模型交付规约.md) 的统一要求：
 
-- **核心权重资产**：检测模型（`qingmou_det.onnx`）与识别模型（`qingmou_rec.onnx`）；
-- **词典与映射**：字符编码字典（`dict.txt`）与检测类别定义（`labels.json`）；
-- **处理管线配置**：输入标准化参数（`preprocess.yaml`）与解码阈值设置（`postprocess.yaml`）；
-- **元数据与血缘**：模型配置及运行依赖（`metadata.yaml`）与文件指纹防伪清单（`manifest.json`）；
-- **可复现验证**：评测记录证据（`evaluation.json`）与轻量自测数据对（`smoke/input.json`、`smoke/expected.json`）。
+| 组成部分 | 交付资产与文件 | 规约要求 |
+| :--- | :--- | :--- |
+| **核心权重资产** | `qingmou_det.onnx`、`qingmou_rec.onnx` | ONNX 格式标准模型权重，支持跨平台轻量推理 |
+| **词典与映射** | `dict.txt`、`labels.json` | 字符编码字典与小目标检测类别定义 |
+| **处理管线配置** | `preprocess.yaml`、`postprocess.yaml` | 归一化参数、目标尺寸、置信度阈值与解码逻辑 |
+| **元数据与血缘** | `metadata.yaml`、`manifest.json` | 依赖环境版本、实验编号与全文件 SHA-256 指纹清单 |
+| **可复现验证** | `evaluation.json`、`smoke/` 验证集 | 分层评测指标记录与自测输入输出测试向量 |
 
 导出的模型包交付 TrainPlatform 执行发布门禁，经批准后由 InferPlatform 在线加载生效。
 
@@ -112,7 +116,10 @@ ModelTrain/                     # 离线算法研发与模型交付仓库
 
 ## 七、权威依据与参考文档
 
-- **系统设计与规划**：[ProjectPRD/REQUIREMENTS.md](../ProjectPRD/REQUIREMENTS.md) · [ProjectPRD/ARCHITECTURE.md](../ProjectPRD/ARCHITECTURE.md) · [ProjectPRD/ROADMAP.md](../ProjectPRD/ROADMAP.md)
-- **科研假设唯一源**：[ProjectPRD/RESEARCH.md](../ProjectPRD/RESEARCH.md)
-- **跨仓技术契约**：[contracts/MODEL.md](../ProjectPRD/contracts/MODEL.md) · [contracts/TRAINING.md](../ProjectPRD/contracts/TRAINING.md) · [contracts/DATA.md](../ProjectPRD/contracts/DATA.md)
-- **质量与工程规范**：[standards/DATA_QUALITY.md](../ProjectPRD/standards/DATA_QUALITY.md) · [standards/ENGINEERING.md](../ProjectPRD/standards/ENGINEERING.md)
+| 规范维度 | 事实源契约 | 核心约束说明 |
+| :--- | :--- | :--- |
+| **系统设计与规划** | [需求规格](../ProjectPRD/需求规格.md) · [系统架构](../ProjectPRD/系统架构.md) · [开发路线](../ProjectPRD/开发路线.md) | 确立系统功能边界、8 仓架构分层与 M0 迭代里程碑 |
+| **科研假设与实验** | [算法实验](../ProjectPRD/算法实验.md) | 规范 H1~H8 算法假设、消融对照组与分层评测指标 |
+| **跨仓技术契约** | [核心数据模型](../ProjectPRD/contracts/核心数据模型.md) · [离线训练规约](../ProjectPRD/contracts/离线训练规约.md) · [模型交付规约](../ProjectPRD/contracts/模型交付规约.md) | 离线执行入口、数据接口规范与标准化模型交付要求 |
+| **质量与工程规范** | [数据质量规范](../ProjectPRD/standards/数据质量规范.md) · [工程协作指南](../ProjectPRD/standards/工程协作指南.md) | 样本准入红线、生活容差与代码提交规约 |
+
