@@ -115,13 +115,17 @@ ModelTrain/                     # 离线算法研发与模型交付仓库
 
 ---
 
-## 七、权威依据与参考文档
+## 七、相关文档
 
-| 规范维度 | 事实源契约 | 核心约束说明 |
-| :--- | :--- | :--- |
-| **系统设计与规划** | [需求规格](../ProjectPRD/需求规格.md) · [系统架构](../ProjectPRD/系统架构.md) · [开发路线](../ProjectPRD/开发路线.md) | 确立系统功能边界、8 仓架构分层与 M0 迭代里程碑 |
-| **科研假设与实验** | [算法实验](../ProjectPRD/算法实验.md) | 规范 H1~H8 算法假设、消融对照组与分层评测指标 |
-| **跨仓技术契约** | [contracts/DATA.md](../ProjectPRD/contracts/DATA.md) · [contracts/TRAINING.md](../ProjectPRD/contracts/TRAINING.md) · [contracts/MODEL.md](../ProjectPRD/contracts/MODEL.md) | 离线执行入口、数据接口规范与标准化模型交付要求 |
-| **质量与工程规范** | [数据质量规范](../ProjectPRD/standards/数据质量规范.md) · [工程协作指南](../ProjectPRD/standards/工程协作指南.md) | 样本准入红线、生活容差与代码提交规约 |
+- [需求规格](../ProjectPRD/需求规格.md)
+- [系统架构](../ProjectPRD/系统架构.md)
+- [开发路线](../ProjectPRD/开发路线.md)
+- [算法实验](../ProjectPRD/算法实验.md)
+- [数据模型](../ProjectPRD/contracts/DATA.md)
+- [训练调度规范](../ProjectPRD/contracts/TRAINING.md)
+- [模型交付规约](../ProjectPRD/contracts/MODEL.md)
+- [数据质量规范](../ProjectPRD/standards/数据质量规范.md)
+- [工程协作指南](../ProjectPRD/standards/工程协作指南.md)
+
 
 
